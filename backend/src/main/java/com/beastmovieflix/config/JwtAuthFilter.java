@@ -21,7 +21,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserRepository userRepository;
 
-    public JwtAuthFilter(JwtService jwtService, UserRepository userRepository) {
+    public JwtAuthFilter(
+        JwtService jwtService,
+        @org.springframework.context.annotation.Lazy UserRepository userRepository
+) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
     }
@@ -70,4 +73,5 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
+
 
