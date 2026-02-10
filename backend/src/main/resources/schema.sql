@@ -102,7 +102,7 @@ CREATE TABLE followers (
 );
 
 -- 8️⃣ GROUPS - Movie Discussion Groups
-CREATE TABLE groups (
+CREATE TABLE user_groups (
     group_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     group_name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -133,3 +133,4 @@ CREATE TABLE group_messages (
     FOREIGN KEY (group_id) REFERENCES groups(group_id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
