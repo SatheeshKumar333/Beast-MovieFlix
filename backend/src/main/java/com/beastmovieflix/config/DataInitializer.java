@@ -27,36 +27,39 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void createAdminAccount() {
+
         String adminUsername = System.getenv("ADMIN_USERNAME");
         String adminEmail = System.getenv("ADMIN_EMAIL");
         String adminPassword = System.getenv("ADMIN_PASSWORD");
 
-        // Check if admin already exists
+        // ✅ SAFETY CHECK - Prevent crash if env vars missing
+        if (adminUsername == null || adminEmail == null || adminPassword == null) {
+            log.warn("Admin environment variables not configured properly. Skipping admin creation.");
+            return;
+        }
+
+        // ✅ Check if admin already exists
         if (userRepository.existsByUsername(adminUsername)) {
             log.info("Admin account already exists: {}", adminUsername);
             return;
         }
 
-        // Create admin user
+        // ✅ Create admin user
         User admin = User.builder()
                 .username(adminUsername)
                 .email(adminEmail)
                 .password(passwordEncoder.encode(adminPassword))
                 .role(User.Role.ADMIN)
-                .emailVerified(true) // Admin is pre-verified
+                .emailVerified(true)
                 .bio("System Administrator")
                 .build();
 
-        // Ensure non-null before save
-        java.util.Objects.requireNonNull(admin, "Admin user cannot be null");
         userRepository.save(admin);
 
-        log.info("╔════════════════════════════════════════╗");
-        log.info("║   ADMIN ACCOUNT CREATED SUCCESSFULLY   ║");
-        log.info("╠════════════════════════════════════════╣");
-        log.info("║ Username: {}                        ║", adminUsername);
-        log.info("║ Email:    {}      ║", adminEmail);
-        log.info("║ Password: {}                    ║", adminPassword);
-        log.info("╚════════════════════════════════════════╝");
+        log.info("==========================================");
+        log.info("ADMIN ACCOUNT CREATED SUCCESSFULLY");
+        log.info("Username: {}", adminUsername);
+        log.info("Email: {}", adminEmail);
+        log.info("==========================================");
     }
 }
