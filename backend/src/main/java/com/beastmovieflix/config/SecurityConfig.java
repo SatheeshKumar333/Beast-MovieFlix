@@ -20,11 +20,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Spring Security Configuration
- *
- * @author Satheesh Kumar
- */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -39,33 +34,32 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .authorizeHttpRequests(auth -> auth
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authorizeHttpRequests(auth -> auth
 
-                        // ✅ Allow root (prevents 403 on Render)
-                        .requestMatchers("/").permitAll()
+                // ✅ Allow preflight
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // ✅ Allow preflight OPTIONS
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // ✅ Allow health + root
+                .requestMatchers("/api/", "/api/health").permitAll()
 
-                        // ✅ Public endpoints
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/movies/**").permitAll()
-                        .requestMatchers("/api/health").permitAll()
+                // ✅ Public APIs
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/movies/**").permitAll()
 
-                        // 🔐 Protected endpoints
-                        .requestMatchers("/api/user/**").authenticated()
-                        .requestMatchers("/api/logs/**").authenticated()
-                        .requestMatchers("/api/groups/**").authenticated()
+                // 🔐 Protected APIs
+                .requestMatchers("/api/user/**").authenticated()
+                .requestMatchers("/api/logs/**").authenticated()
+                .requestMatchers("/api/groups/**").authenticated()
 
-                        // 🔒 Everything else requires authentication
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                // 🔒 Everything else secured
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -77,13 +71,13 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
         config.setAllowedMethods(
-                Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")
         );
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
+            new UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", config);
 
