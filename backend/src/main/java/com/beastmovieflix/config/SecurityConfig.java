@@ -34,32 +34,46 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .authorizeHttpRequests(auth -> auth
+                // ✅ Enable CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // ✅ Allow preflight
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // ✅ Disable CSRF (JWT based)
+                .csrf(AbstractHttpConfigurer::disable)
 
-                // ✅ Allow health + root
-                .requestMatchers("/api/", "/api/health").permitAll()
+                // ✅ Stateless session
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
 
-                // ✅ Public APIs
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/movies/**").permitAll()
+                // ✅ Authorization rules
+                .authorizeHttpRequests(auth -> auth
 
-                // 🔐 Protected APIs
-                .requestMatchers("/api/user/**").authenticated()
-                .requestMatchers("/api/logs/**").authenticated()
-                .requestMatchers("/api/groups/**").authenticated()
+                        // Allow root URL (prevents 403 on Render)
+                        .requestMatchers("/").permitAll()
 
-                // 🔒 Everything else secured
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                        // Allow health endpoint
+                        .requestMatchers("/api/health").permitAll()
+
+                        // Allow preflight requests
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Public authentication endpoints
+                        .requestMatchers("/api/auth/**").permitAll()
+
+                        // Public movie browsing
+                        .requestMatchers(HttpMethod.GET, "/api/movies/**").permitAll()
+
+                        // Protected endpoints
+                        .requestMatchers("/api/user/**").authenticated()
+                        .requestMatchers("/api/logs/**").authenticated()
+                        .requestMatchers("/api/groups/**").authenticated()
+
+                        // Everything else requires authentication
+                        .anyRequest().authenticated()
+                )
+
+                // ✅ Add JWT filter
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -71,13 +85,13 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
         config.setAllowedMethods(
-            Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")
         );
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =
-            new UrlBasedCorsConfigurationSource();
+                new UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", config);
 
