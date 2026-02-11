@@ -16,12 +16,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.Arrays;
 import java.util.List;
 
 /**
  * Spring Security Configuration
- * 
+ *
  * @author Satheesh Kumar
  */
 @Configuration
@@ -36,27 +37,34 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .authorizeHttpRequests(auth -> auth
-                        // Allow preflight OPTIONS requests
+
+                        // ✅ Allow root (prevents 403 on Render)
+                        .requestMatchers("/").permitAll()
+
+                        // ✅ Allow preflight OPTIONS
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Public endpoints
+                        // ✅ Public endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
 
-                        // Protected endpoints
+                        // 🔐 Protected endpoints
                         .requestMatchers("/api/user/**").authenticated()
                         .requestMatchers("/api/logs/**").authenticated()
                         .requestMatchers("/api/groups/**").authenticated()
 
-                        // All other requests
-                        .anyRequest().authenticated())
+                        // 🔒 Everything else requires authentication
+                        .anyRequest().authenticated()
+                )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -67,15 +75,10 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow frontend URLs (from env variable)
-        config.setAllowedOrigins(
-                Arrays.asList(allowedOrigins.split(","))
-        );
-
+        config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
         config.setAllowedMethods(
                 Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")
         );
-
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
