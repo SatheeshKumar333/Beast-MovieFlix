@@ -15,7 +15,7 @@ import java.util.Set;
  * @author Satheesh Kumar
  */
 @Entity
-@Table(name = "groups")
+@Table(name = "user_groups")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -53,3 +53,4 @@ public class MovieGroup {
         this.createdAt = LocalDateTime.now();
     }
 }
+
